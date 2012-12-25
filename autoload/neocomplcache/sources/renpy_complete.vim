@@ -9,16 +9,20 @@ let s:source = {
       \ }
 
 function! s:source.initialize()
-if !exists('g:renpy_transform')
-        let g:renpy_transform = []
-endif
-if !exists('g:renpy_transiton')
-        let g:renpy_transition = []
-endif
-if !exists('g:renpy_image')
-        let g:renpy_image = {}
-        "let g:renpy_image = {'imagetag': 'imageattribute', ...}
-endif
+  if !exists('g:renpy_transform')
+          let g:renpy_transform = []
+  endif
+  if !exists('g:renpy_transiton')
+          let g:renpy_transition = []
+  endif
+  if !exists('g:renpy_image')
+          "let g:renpy_image = {}
+          let g:renpy_image = {'imagetag': ['imageattribute']}
+  endif
+  let s:imagetag_list = []
+  for l:imagetag in keys(g:renpy_image)
+    call add(s:imagetag_list , {'word': l:imagetag})
+  endfor
 endfunction
 
 function! s:source.finalize()
@@ -78,29 +82,30 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
  "{{{ scene
   elseif search('scene\s\%#', 'bcn', l:line)
     call add(l:list , {'word': 'expression' , 'menu': ''})
-    call extend(l:list, keys(g:renpy_image) )
+    call extend(l:list, s:imagetag_list )
  "}}}
  "{{{ show
   elseif search('show\s\%#', 'bcn', l:line)
     call add(l:list , {'word': 'expression' , 'menu': ''})
-    call extend(l:list, keys(g:renpy_image) )
+    call extend(l:list, s:imagetag_list )
  "}}}
  "{{{ hide
   elseif search('hide\s\%#', 'bcn', l:line)
-    call extend(l:list, keys(g:renpy_image) )
+    call extend(l:list, s:imagetag_list )
   " }}}
  "{{{  imagename
  else
   for l:imagetag in keys(g:renpy_image)
     if search(l:imagetag.'.*\s\%#', 'bcn', l:line)
-      call extend(l:list, g:renpy_image[l:imagetag])
+      for l:imageattribute in g:renpy_image[l:imagetag]
+        call add(l:list , {'word': l:imageattribute})
+      endfor
       call add(l:list , {'word': 'at' , 'menu': ''})
       call add(l:list , {'word': 'with' , 'menu': ''})
     endif
   endfor
  endif
  "}}}
-	endif
   return neocomplcache#keyword_filter(l:list, a:cur_keyword_str)
 endfunction "}}}
 
