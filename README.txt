@@ -1,9 +1,9 @@
 complete RenPy language by vim and neocomplcache
 
-vim‚Æneocomplcache‚ğg‚Á‚ÄRen'Py‚Ì•âŠ®‚ğ‚·‚éƒvƒ‰ƒOƒCƒ“
-İ’è‚É‚æ‚èƒ†[ƒU[’è‹`ƒgƒ‰ƒ“ƒWƒVƒ‡ƒ“A•ÏŠ·A‰æ‘œƒ^ƒOA‰æ‘œ‘®«‚à•âŠ®o—ˆ‚é
-‚Ü‚½AATL‚à”F¯‚·‚éB
-Ú‚µ‚­‚Í ƒuƒƒO‚Öhttp://akakyouryuu.blog.fc2.com/blog-entry-9.html
+vimã¨neocomplcacheã‚’ä½¿ã£ã¦Ren'Pyã®è£œå®Œã‚’ã™ã‚‹ãƒ—ãƒ©ã‚°ã‚¤ãƒ³
+è¨­å®šã«ã‚ˆã‚Šãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©ãƒˆãƒ©ãƒ³ã‚¸ã‚·ãƒ§ãƒ³ã€å¤‰æ›ã€ç”»åƒã‚¿ã‚°ã€ç”»åƒå±æ€§ã‚‚è£œå®Œå‡ºæ¥ã‚‹
+ã¾ãŸã€ATLã‚‚èªè­˜ã™ã‚‹ã€‚
+è©³ã—ãã¯ ãƒ–ãƒ­ã‚°ã¸http://akakyouryuu.blog.fc2.com/blog-entry-9.html
 
 
 require:
