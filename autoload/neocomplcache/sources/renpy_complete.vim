@@ -7,50 +7,53 @@ let s:source = {
       \ 'filetypes': { 'renpy': 1 },
       \ }
 
-function! s:source.initialize()
+function! s:source.initialize() " {{{
   if !exists('g:renpy_transform')
+          " let g:renpy_transform = [{'word': 'sample'}]
           let g:renpy_transform = []
   endif
-  if !exists('g:renpy_transiton')
+  if !exists('g:renpy_transition')
+          " let g:renpy_transition = [{'word': 'sample'}]
           let g:renpy_transition = []
   endif
+  if !exists('g:renpy_music')
+          " let g:renpy_music = [{'word': 'sample'}]
+          let g:renpy_music = []
+  endif
   if !exists('g:renpy_image')
-          "let g:renpy_image = {}
-          let g:renpy_image = {'imagetag': ['imageattribute']}
+          " let g:renpy_image = {'imagetag': ['imageattribute']}
+          let g:renpy_image = {}
   endif
   let s:imagetag_list = []
   for l:imagetag in keys(g:renpy_image)
     call add(s:imagetag_list , {'word': l:imagetag})
   endfor
-endfunction
+endfunction " }}}
 
 function! s:source.finalize()
 endfunction
 
 function! s:source.get_keyword_pos(cur_text) "{{{
+	" è¦å®šã®ç©ºç™½ä»¥å¤–ã®æ–‡å­—ã‚’å…¥åŠ›å¾Œã«å‘¼ã°ã‚Œã‚‹
   if neocomplcache#within_comment()
     return -1
   endif
-  if s:checkATL()
-		return matchend(a:cur_text, '.*\w*\s$')
-  elseif match(a:cur_text, '"') < 0
-    if search('.*\w*\s\%#', 'bcn', neocomplcache#get_cur_text() )
-      return matchend(a:cur_text, '.*\w*\s$')
-    elseif a:cur_text =~ '^\s*$'
-      return matchend(a:cur_text, '^\s*$')
-    else
-      return matchend(a:cur_text, '^\h') - 1
-    endif
+	if a:cur_text =~ '.*\w\+ \+'
+		" echo matchend(a:cur_text, '.* ')
+		return matchend(a:cur_text, '.* ') " å˜èªã®å¾Œã®ç©ºç™½
+	else
+		" echo matchend(a:cur_text, '^ *')
+		return matchend(a:cur_text, '^ *') " ç©ºç™½ã‚’é™¤ã„ãŸå…ˆé ­
   endif
 endfunction "}}}
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
   let l:list = []
-  let l:line = neocomplcache#get_cur_text()
+  let l:line = strpart(getline('.'), 0, getpos('.')[2]-1)
   if s:checkATL()
  "{{{ ATL
-   "{{{ with transition
-    if search('with\s\%#', 'bcn', l:line)
+   "{{{ with transition (with #)
+    if l:line =~ 'with\s\+\w*$'
       call add(l:list , {'word': 'dissolve'           , 'menu': ''})
       call add(l:list , {'word': 'fade'               , 'menu': ''})
       call add(l:list , {'word': 'move'               , 'menu': ''})
@@ -118,86 +121,174 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
       call extend(l:list, g:renpy_transition)
    "}}}
     else
-      call add(l:list , {'word': 'pass'    , 'menu': ''})
-      call add(l:list , {'word': 'repeat'    , 'menu': ''})
-      call add(l:list , {'word': 'block:'    , 'menu': ''})
-      call add(l:list , {'word': 'choice:'    , 'menu': ''})
+      call add(l:list , {'word': 'pass'        , 'menu': ''})
+      call add(l:list , {'word': 'repeat'      , 'menu': ''})
+      call add(l:list , {'word': 'block:'      , 'menu': ''})
+      call add(l:list , {'word': 'choice:'     , 'menu': ''})
       call add(l:list , {'word': 'parallel'    , 'menu': ''})
-      call add(l:list , {'word': 'event'    , 'menu': ''})
-      call add(l:list , {'word': 'on'    , 'menu': ''})
+      call add(l:list , {'word': 'event'       , 'menu': ''})
+      call add(l:list , {'word': 'on'          , 'menu': ''})
       call add(l:list , {'word': 'contains'    , 'menu': ''})
       call add(l:list , {'word': 'function'    , 'menu': ''})
-      call add(l:list , {'word': 'with'    , 'menu': ''})
+      call add(l:list , {'word': 'with'        , 'menu': ''})
 
-      call add(l:list ,  {'word': 'pause', 'menu': "ˆê’â~‚µAV‚µ‚¢’l‚É”ò‚Ñ‚Ü‚·Bt == 1.0 ‚È‚ç t' = 1.0A‚»‚¤‚Å‚È‚¯‚ê‚Î t' = 0.0 ‚Å‚·B"})
-      call add(l:list ,  {'word': 'linear', 'menu': "üŒ`•âŠÔ‚Å‚·Bt' = t'"})
-      call add(l:list ,  {'word': 'ease', 'menu': "Å‰‚Í’x‚­AƒXƒs[ƒhƒAƒbƒv‚µA‚»‚ê‚©‚çƒXƒ[ƒ_ƒEƒ“‚µ‚Ü‚·Bt' = 0.5 - math.cos(math.pi * t) / 2.0'"})
-      call add(l:list ,  {'word': 'easein', 'menu': "Å‰‚Í‘¬‚­AƒXƒ[ƒ_ƒEƒ“‚µ‚Ü‚·Bt' = math.cos((1.0 - t) * math.pi / 2.0'"})
-      call add(l:list ,  {'word': 'easeout', 'menu': "Å‰‚Í’x‚­AƒXƒs[ƒhƒAƒbƒv‚µ‚Ü‚·Bt' = 1.0 - math.cos(t * math.pi / 2.0) '"})
+      call add(l:list , {'word': 'pause'       , 'menu': "ä¸€æ™‚åœæ­¢ã—ã€æ–°ã—ã„å€¤ã«é£›ã³ã¾ã™ã€‚t == 1.0 ãªã‚‰ t' = 1.0ã€ãã†ã§ãªã‘ã‚Œã° t' = 0.0 ã§ã™ã€‚"})
+      call add(l:list , {'word': 'linear'      , 'menu': "ç·šå½¢è£œé–“ã§ã™ã€‚t' = t'"})
+      call add(l:list , {'word': 'ease'        , 'menu': "æœ€åˆã¯é…ãã€ã‚¹ãƒ”ãƒ¼ãƒ‰ã‚¢ãƒƒãƒ—ã—ã€ãã‚Œã‹ã‚‰ã‚¹ãƒ­ãƒ¼ãƒ€ã‚¦ãƒ³ã—ã¾ã™ã€‚t' = 0.5 - math.cos(math.pi * t) / 2.0'"})
+      call add(l:list , {'word': 'easein'      , 'menu': "æœ€åˆã¯é€Ÿãã€ã‚¹ãƒ­ãƒ¼ãƒ€ã‚¦ãƒ³ã—ã¾ã™ã€‚t' = math.cos((1.0 - t) * math.pi / 2.0'"})
+      call add(l:list , {'word': 'easeout'     , 'menu': "æœ€åˆã¯é…ãã€ã‚¹ãƒ”ãƒ¼ãƒ‰ã‚¢ãƒƒãƒ—ã—ã¾ã™ã€‚t' = 1.0 - math.cos(t * math.pi / 2.0) '"})
 
-      call add(l:list ,  {'word': 'pos',  'menu': "Type :	(position, position)|Default :	(0, 0)|‚»‚ê‚ğŠÜ‚Ş—Ìˆæ‚Ì¶ã‹÷‚É‘Î‚·‚éˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'xpos',  'menu': "Type :	position|Default :	0|‚»‚ê‚ğŠÜ‚Ş—Ìˆæ‚Ì¶’[‚É‘Î‚·‚é…•½ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'ypos',  'menu': "Type :	position|Default :	0|‚»‚ê‚ğŠÜ‚Ş—Ìˆæ‚Ìã’[‚É‘Î‚·‚é‚’¼ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'anchor',  'menu': "Type :	(position, position)|Default :	(0, 0)|‚»‚ê‚ğŠÜ‚Ş displayable ‚Ì¶ã‹÷‚É‘Î‚·‚éƒAƒ“ƒJ[ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'xanchor',  'menu': "Type :	position|Default :	0|‚»‚ê‚ğŠÜ‚Ş displayable ‚Ì¶’[‚É‘Î‚·‚é…•½ƒAƒ“ƒJ[ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'yanchor',  'menu': "Type :	position|Default :	0|‚»‚ê‚ğŠÜ‚Ş displayable ‚Ìã’[‚É‘Î‚·‚é‚’¼ƒAƒ“ƒJ[ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'align',  'menu': "Type :	(float, float)|Default :	(0.0, 0.0)|‚»‚ê‚ğŠÜ‚Ş displayable ‚Ìã’[‚É‘Î‚·‚é‚’¼ƒAƒ“ƒJ[ˆÊ’u‚Å‚·B"})
-      call add(l:list ,  {'word': 'xalign',  'menu': "Type :	float|Default :	0.0|xpos ‚¨‚æ‚Ñ xanchor ‚ğ‚±‚Ì’l‚Éİ’è‚·‚é‚Ì‚Æ“™‰¿‚Å‚·B"})
-      call add(l:list ,  {'word': 'yalign',  'menu': "Type :	float|Default :	0.0|ypos ‚¨‚æ‚Ñ yanchor ‚ğ‚±‚Ì’l‚Éİ’è‚·‚é‚Ì‚Æ“™‰¿‚Å‚·B"})
-      call add(l:list ,  {'word': 'xcenter',  'menu': "Type :	float|Default :	0.0|xpos ‚ğ‚±‚ÌƒvƒƒpƒeƒB‚Ì’l‚ÉAxanchor ‚ğ 0.5 ‚Éİ’è‚·‚é‚Ì‚Æ“™‰¿‚Å‚·B"})
-      call add(l:list ,  {'word': 'ycenter',  'menu': "Type :	float|Default :	0.0|rpos ‚ğ‚±‚ÌƒvƒƒpƒeƒB‚Ì’l‚ÉAranchor ‚ğ 0.5 ‚Éİ’è‚·‚é‚Ì‚Æ“™‰¿‚Å‚·B"})
-      call add(l:list ,  {'word': 'rotate',  'menu': "Type :	float or None|Default :	None|None ‚È‚çA‰ñ“]‚Í‹N‚±‚è‚Ü‚¹‚ñB‚»‚¤‚Å‚È‚¯‚ê‚ÎA‰æ‘œ‚Í‚±‚ÌŠp“x‚¾‚¯Œv‰ñ‚è‚É‰ñ“]‚µ‚Ü‚·Bdisplayable ‚ğ‰ñ“]‚·‚é‚ÆArotate_pad ‚Ìİ’è‚É]‚Á‚ÄƒŠƒTƒCƒY‚³‚ê‚Ü‚·Bxanchor ‚¨‚æ‚Ñ yanchor ‚ª 0.5 ‚Å‚È‚¯‚ê‚ÎA‚±‚ê‚É‚æ‚Á‚ÄˆÊ’uæ‚è‚ª•Ï‚í‚é‚±‚Æ‚ª‚ ‚è‚Ü‚·B"})
-      call add(l:list ,  {'word': 'rotate_pad',  'menu': "Type :	boolean|Default :	True|^‚È‚çA‰ñ“]‚³‚ê‚½ displayable ‚Ì•‚Æ‚‚³‚ªAŒ³‚Ì•‚Æ‚‚³‚ÌÎ•Ó‚Æ“¯‚¶‚É‚È‚é‚æ‚¤‚É–„‚ß‚Ü‚ê‚Ü‚·B‚±‚ê‚ÍA•ÏŠ·‚ª“à—e‚ğ‰ñ“]‚³‚¹‚Ä‚àƒTƒCƒY‚ª•Ï‚í‚ç‚È‚¢‚±‚Æ‚ğ•ÛØ‚µ‚Ü‚·B‹U‚È‚çA•ÏŠ·‚Í•ÏŠ·‚³‚ê‚½ displayable ‚ğŠÜ‚ŞÅ¬ŒÀ‚ÌƒTƒCƒY‚É‚È‚è‚Ü‚·B‚±‚ê‚ÍŒÅ’è‰ñ“]‚ÉŒü‚¢‚Ä‚¢‚Ü‚·B"})
-      call add(l:list ,  {'word': 'zoom',  'menu': "Type :	float|Default :	1.0|‚±‚ê‚ÍAdisplayable ‚É—^‚¦‚ç‚ê‚½ŒW””{ƒY[ƒ€‚µ‚Ü‚·B‚±‚ê‚Í•K‚¸ 0.5 ‚æ‚è‘å‚«‚­‚µ‚Ä‚­‚¾‚³‚¢B"})
-      call add(l:list ,  {'word': 'xzoom',  'menu': "Type :	float|Default :	1.0|‚±‚ê‚ÍAdisplayable ‚É—^‚¦‚ç‚ê‚½ŒW””{…•½‚ÉƒY[ƒ€‚µ‚Ü‚·B‚±‚ê‚Í•K‚¸ 0.5 ‚æ‚è‘å‚«‚­‚µ‚Ä‚­‚¾‚³‚¢B"})
-      call add(l:list ,  {'word': 'yzoom',  'menu': "Type :	float|Default :	1.0|‚±‚ê‚ÍAdisplayable ‚É—^‚¦‚ç‚ê‚½ŒW””{‚’¼‚ÉƒY[ƒ€‚µ‚Ü‚·B‚±‚ê‚Í•K‚¸ 0.5 ‚æ‚è‘å‚«‚­‚µ‚Ä‚­‚¾‚³‚¢B"})
-      call add(l:list ,  {'word': 'alpha',  'menu': "Type :	float|Default :	1.0|‚±‚ê‚ÍAdisplayable ‚Ì“§–¾“x‚ğ§Œä‚µ‚Ü‚·B"})
-      call add(l:list ,  {'word': 'around',  'menu': "Type :	(position, position)|Default :	(0.0, 0.0)|None ‚Å‚È‚¯‚ê‚ÎA‚»‚ê‚ğŠÜ‚Ş—Ìˆæ‚Ì‰Eã‚É‘Î‚·‚é‹ÉÀ•W‚Ì’†S‚ğw’è‚µ‚Ü‚·B‚±‚ê‚Å’†S‚ğİ’è‚·‚é‚ÆAposition ƒ‚[ƒh‚Å‰~‰^“®‚ª‚Å‚«‚Ü‚·B"})
-      call add(l:list ,  {'word': 'alignaround',  'menu': "Type :	(float, float)|Default :	(0.0, 0.0)|None ‚Å‚È‚¯‚ê‚ÎA‚»‚ê‚ğŠÜ‚Ş—Ìˆæ‚Ì‰Eã‚É‘Î‚·‚é‹ÉÀ•W‚Ì’†S‚ğw’è‚µ‚Ü‚·B‚±‚ê‚Å’†S‚ğİ’è‚·‚é‚ÆAalign ƒ‚[ƒh‚Å‰~‰^“®‚ª‚Å‚«‚Ü‚·B"})
-      call add(l:list ,  {'word': 'angle', 'menu':  "Type :	float|‹ÉÀ•W‚É‚¨‚¯‚éˆÊ’u‚ÌŠp“x¬•ª‚ğæ‚è‚Ü‚·B‚±‚ê‚ÍA‹ÉÀ•W‚Ì’†S‚ªİ’è‚³‚ê‚Ä‚¢‚È‚¢‚Æ‚«‚É‚Í–¢’è‹`‚Å‚·B"})
-      call add(l:list , {'word': 'radius', 'menu': "Type :	position|‹ÉÀ•W‚É‚¨‚¯‚éˆÊ’u‚Ì”¼Œa¬•ª‚ğæ‚è‚Ü‚·B‚±‚ê‚ÍA‹ÉÀ•W‚Ì’†S‚ªİ’è‚³‚ê‚Ä‚¢‚È‚¢‚Æ‚«‚É‚Í–¢’è‹`‚Å‚·B"})
-      call add(l:list , {'word': 'crop', 'menu': "Type :	None or (int, int, int, int)|Default :	None|None ‚Å‚È‚¯‚ê‚ÎAdisplayable ‚Í—^‚¦‚ç‚ê‚½ƒ{ƒbƒNƒX‚ÉØ‚è”²‚©‚ê‚Ü‚·B‚»‚Ìƒ{ƒbƒNƒX‚ÍA(x, y, width, height) ‚Ìƒ^ƒvƒ‹‚Åw’è‚µ‚Ü‚·B"})
-      call add(l:list , {'word': 'corner1', 'menu': "Type :	None or (int, int)|Default :	None|None ‚Å‚È‚¯‚ê‚ÎAcrop ƒ{ƒbƒNƒX‚Ì¶ã‹÷‚ğ—^‚¦‚Ü‚·B‚±‚ê‚Í crop ‚æ‚è—Dæ‚³‚ê‚Ü‚·B"})
-      call add(l:list , {'word': 'corner2', 'menu': "Type :	None or (int, int)|Default :	None|None ‚Å‚È‚¯‚ê‚ÎAcrop ƒ{ƒbƒNƒX‚Ì‰E‰º‹÷‚ğ—^‚¦‚Ü‚·B‚±‚ê‚Í crop ‚æ‚è—Dæ‚³‚ê‚Ü‚·B"})
-      call add(l:list , {'word': 'size', 'menu': "Type :	None or (int, int)|Default :	None|None ‚Å‚È‚¯‚ê‚ÎAdisplayable ‚ğ—^‚¦‚ç‚ê‚½ƒTƒCƒY‚É‡‚í‚¹‚Ü‚·B"})
-      call add(l:list , {'word': 'subpixel', 'menu': "Type :	boolean|Default :	False|^‚È‚çAƒsƒNƒZƒ‹ˆÈ‰º‚ÌˆÊ’u’²®‚ğ—˜—p‚µ‚ÄƒXƒNƒŠ[ƒ“‚É•`‰æ‚³‚ê‚Ü‚·B"})
-      call add(l:list , {'word': 'delay', 'menu': "Type :	float|Default :	0.0|‚±‚Ì•ÏŠ·‚ªƒgƒ‰ƒ“ƒWƒVƒ‡ƒ“‚Æ‚µ‚Äg‚í‚ê‚Ä‚¢‚ê‚ÎA‚±‚ê‚Íƒgƒ‰ƒ“ƒWƒVƒ‡ƒ“‚Ì‘±ŠÔ‚Å‚·B"})
+      call add(l:list , {'word': 'pos'         , 'menu': "Type :	(position, position)|Default :	(0, 0)|ãã‚Œã‚’å«ã‚€é ˜åŸŸã®å·¦ä¸Šéš…ã«å¯¾ã™ã‚‹ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'xpos'        , 'menu': "Type :	position|Default :	0|ãã‚Œã‚’å«ã‚€é ˜åŸŸã®å·¦ç«¯ã«å¯¾ã™ã‚‹æ°´å¹³ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'ypos'        , 'menu': "Type :	position|Default :	0|ãã‚Œã‚’å«ã‚€é ˜åŸŸã®ä¸Šç«¯ã«å¯¾ã™ã‚‹å‚ç›´ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'anchor'      , 'menu': "Type :	(position, position)|Default :	(0, 0)|ãã‚Œã‚’å«ã‚€ displayable ã®å·¦ä¸Šéš…ã«å¯¾ã™ã‚‹ã‚¢ãƒ³ã‚«ãƒ¼ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'xanchor'     , 'menu': "Type :	position|Default :	0|ãã‚Œã‚’å«ã‚€ displayable ã®å·¦ç«¯ã«å¯¾ã™ã‚‹æ°´å¹³ã‚¢ãƒ³ã‚«ãƒ¼ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'yanchor'     , 'menu': "Type :	position|Default :	0|ãã‚Œã‚’å«ã‚€ displayable ã®ä¸Šç«¯ã«å¯¾ã™ã‚‹å‚ç›´ã‚¢ãƒ³ã‚«ãƒ¼ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'align'       , 'menu': "Type :	(float, float)|Default :	(0.0, 0.0)|ãã‚Œã‚’å«ã‚€ displayable ã®ä¸Šç«¯ã«å¯¾ã™ã‚‹å‚ç›´ã‚¢ãƒ³ã‚«ãƒ¼ä½ç½®ã§ã™ã€‚"})
+      call add(l:list , {'word': 'xalign'      , 'menu': "Type :	float|Default :	0.0|xpos ãŠã‚ˆã³ xanchor ã‚’ã“ã®å€¤ã«è¨­å®šã™ã‚‹ã®ã¨ç­‰ä¾¡ã§ã™ã€‚"})
+      call add(l:list , {'word': 'yalign'      , 'menu': "Type :	float|Default :	0.0|ypos ãŠã‚ˆã³ yanchor ã‚’ã“ã®å€¤ã«è¨­å®šã™ã‚‹ã®ã¨ç­‰ä¾¡ã§ã™ã€‚"})
+      call add(l:list , {'word': 'xcenter'     , 'menu': "Type :	float|Default :	0.0|xpos ã‚’ã“ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã®å€¤ã«ã€xanchor ã‚’ 0.5 ã«è¨­å®šã™ã‚‹ã®ã¨ç­‰ä¾¡ã§ã™ã€‚"})
+      call add(l:list , {'word': 'ycenter'     , 'menu': "Type :	float|Default :	0.0|rpos ã‚’ã“ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã®å€¤ã«ã€ranchor ã‚’ 0.5 ã«è¨­å®šã™ã‚‹ã®ã¨ç­‰ä¾¡ã§ã™ã€‚"})
+      call add(l:list , {'word': 'rotate'      , 'menu': "Type :	float or None|Default :	None|None ãªã‚‰ã€å›è»¢ã¯èµ·ã“ã‚Šã¾ã›ã‚“ã€‚ãã†ã§ãªã‘ã‚Œã°ã€ç”»åƒã¯ã“ã®è§’åº¦ã ã‘æ™‚è¨ˆå›ã‚Šã«å›è»¢ã—ã¾ã™ã€‚displayable ã‚’å›è»¢ã™ã‚‹ã¨ã€rotate_pad ã®è¨­å®šã«å¾“ã£ã¦ãƒªã‚µã‚¤ã‚ºã•ã‚Œã¾ã™ã€‚xanchor ãŠã‚ˆã³ yanchor ãŒ 0.5 ã§ãªã‘ã‚Œã°ã€ã“ã‚Œã«ã‚ˆã£ã¦ä½ç½®å–ã‚ŠãŒå¤‰ã‚ã‚‹ã“ã¨ãŒã‚ã‚Šã¾ã™ã€‚"})
+      call add(l:list , {'word': 'rotate_pad'  , 'menu': "Type :	boolean|Default :	True|çœŸãªã‚‰ã€å›è»¢ã•ã‚ŒãŸ displayable ã®å¹…ã¨é«˜ã•ãŒã€å…ƒã®å¹…ã¨é«˜ã•ã®æ–œè¾ºã¨åŒã˜ã«ãªã‚‹ã‚ˆã†ã«åŸ‹ã‚è¾¼ã¾ã‚Œã¾ã™ã€‚ã“ã‚Œã¯ã€å¤‰æ›ãŒå†…å®¹ã‚’å›è»¢ã•ã›ã¦ã‚‚ã‚µã‚¤ã‚ºãŒå¤‰ã‚ã‚‰ãªã„ã“ã¨ã‚’ä¿è¨¼ã—ã¾ã™ã€‚å½ãªã‚‰ã€å¤‰æ›ã¯å¤‰æ›ã•ã‚ŒãŸ displayable ã‚’å«ã‚€æœ€å°é™ã®ã‚µã‚¤ã‚ºã«ãªã‚Šã¾ã™ã€‚ã“ã‚Œã¯å›ºå®šå›è»¢ã«å‘ã„ã¦ã„ã¾ã™ã€‚"})
+      call add(l:list , {'word': 'zoom'        , 'menu': "Type :	float|Default :	1.0|ã“ã‚Œã¯ã€displayable ã«ä¸ãˆã‚‰ã‚ŒãŸä¿‚æ•°å€ã‚ºãƒ¼ãƒ ã—ã¾ã™ã€‚ã“ã‚Œã¯å¿…ãš 0.5 ã‚ˆã‚Šå¤§ããã—ã¦ãã ã•ã„ã€‚"})
+      call add(l:list , {'word': 'xzoom'       , 'menu': "Type :	float|Default :	1.0|ã“ã‚Œã¯ã€displayable ã«ä¸ãˆã‚‰ã‚ŒãŸä¿‚æ•°å€æ°´å¹³ã«ã‚ºãƒ¼ãƒ ã—ã¾ã™ã€‚ã“ã‚Œã¯å¿…ãš 0.5 ã‚ˆã‚Šå¤§ããã—ã¦ãã ã•ã„ã€‚"})
+      call add(l:list , {'word': 'yzoom'       , 'menu': "Type :	float|Default :	1.0|ã“ã‚Œã¯ã€displayable ã«ä¸ãˆã‚‰ã‚ŒãŸä¿‚æ•°å€å‚ç›´ã«ã‚ºãƒ¼ãƒ ã—ã¾ã™ã€‚ã“ã‚Œã¯å¿…ãš 0.5 ã‚ˆã‚Šå¤§ããã—ã¦ãã ã•ã„ã€‚"})
+      call add(l:list , {'word': 'alpha'       , 'menu': "Type :	float|Default :	1.0|ã“ã‚Œã¯ã€displayable ã®é€æ˜åº¦ã‚’åˆ¶å¾¡ã—ã¾ã™ã€‚"})
+      call add(l:list , {'word': 'around'      , 'menu': "Type :	(position, position)|Default :	(0.0, 0.0)|None ã§ãªã‘ã‚Œã°ã€ãã‚Œã‚’å«ã‚€é ˜åŸŸã®å³ä¸Šã«å¯¾ã™ã‚‹æ¥µåº§æ¨™ã®ä¸­å¿ƒã‚’æŒ‡å®šã—ã¾ã™ã€‚ã“ã‚Œã§ä¸­å¿ƒã‚’è¨­å®šã™ã‚‹ã¨ã€position ãƒ¢ãƒ¼ãƒ‰ã§å††é‹å‹•ãŒã§ãã¾ã™ã€‚"})
+      call add(l:list , {'word': 'alignaround' , 'menu': "Type :	(float, float)|Default :	(0.0, 0.0)|None ã§ãªã‘ã‚Œã°ã€ãã‚Œã‚’å«ã‚€é ˜åŸŸã®å³ä¸Šã«å¯¾ã™ã‚‹æ¥µåº§æ¨™ã®ä¸­å¿ƒã‚’æŒ‡å®šã—ã¾ã™ã€‚ã“ã‚Œã§ä¸­å¿ƒã‚’è¨­å®šã™ã‚‹ã¨ã€align ãƒ¢ãƒ¼ãƒ‰ã§å††é‹å‹•ãŒã§ãã¾ã™ã€‚"})
+      call add(l:list , {'word': 'angle'       , 'menu':  "Type :	float|æ¥µåº§æ¨™ã«ãŠã‘ã‚‹ä½ç½®ã®è§’åº¦æˆåˆ†ã‚’å–ã‚Šã¾ã™ã€‚ã“ã‚Œã¯ã€æ¥µåº§æ¨™ã®ä¸­å¿ƒãŒè¨­å®šã•ã‚Œã¦ã„ãªã„ã¨ãã«ã¯æœªå®šç¾©ã§ã™ã€‚"})
+      call add(l:list , {'word': 'radius'      , 'menu': "Type :	position|æ¥µåº§æ¨™ã«ãŠã‘ã‚‹ä½ç½®ã®åŠå¾„æˆåˆ†ã‚’å–ã‚Šã¾ã™ã€‚ã“ã‚Œã¯ã€æ¥µåº§æ¨™ã®ä¸­å¿ƒãŒè¨­å®šã•ã‚Œã¦ã„ãªã„ã¨ãã«ã¯æœªå®šç¾©ã§ã™ã€‚"})
+      call add(l:list , {'word': 'crop'        , 'menu': "Type :	None or (int, int, int, int)|Default :	None|None ã§ãªã‘ã‚Œã°ã€displayable ã¯ä¸ãˆã‚‰ã‚ŒãŸãƒœãƒƒã‚¯ã‚¹ã«åˆ‡ã‚ŠæŠœã‹ã‚Œã¾ã™ã€‚ãã®ãƒœãƒƒã‚¯ã‚¹ã¯ã€(x, y, width, height) ã®ã‚¿ãƒ—ãƒ«ã§æŒ‡å®šã—ã¾ã™ã€‚"})
+      call add(l:list , {'word': 'corner1'     , 'menu': "Type :	None or (int, int)|Default :	None|None ã§ãªã‘ã‚Œã°ã€crop ãƒœãƒƒã‚¯ã‚¹ã®å·¦ä¸Šéš…ã‚’ä¸ãˆã¾ã™ã€‚ã“ã‚Œã¯ crop ã‚ˆã‚Šå„ªå…ˆã•ã‚Œã¾ã™ã€‚"})
+      call add(l:list , {'word': 'corner2'     , 'menu': "Type :	None or (int, int)|Default :	None|None ã§ãªã‘ã‚Œã°ã€crop ãƒœãƒƒã‚¯ã‚¹ã®å³ä¸‹éš…ã‚’ä¸ãˆã¾ã™ã€‚ã“ã‚Œã¯ crop ã‚ˆã‚Šå„ªå…ˆã•ã‚Œã¾ã™ã€‚"})
+      call add(l:list , {'word': 'size'        , 'menu': "Type :	None or (int, int)|Default :	None|None ã§ãªã‘ã‚Œã°ã€displayable ã‚’ä¸ãˆã‚‰ã‚ŒãŸã‚µã‚¤ã‚ºã«åˆã‚ã›ã¾ã™ã€‚"})
+      call add(l:list , {'word': 'subpixel'    , 'menu': "Type :	boolean|Default :	False|çœŸãªã‚‰ã€ãƒ”ã‚¯ã‚»ãƒ«ä»¥ä¸‹ã®ä½ç½®èª¿æ•´ã‚’åˆ©ç”¨ã—ã¦ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã«æç”»ã•ã‚Œã¾ã™ã€‚"})
+      call add(l:list , {'word': 'delay'       , 'menu': "Type :	float|Default :	0.0|ã“ã®å¤‰æ›ãŒãƒˆãƒ©ãƒ³ã‚¸ã‚·ãƒ§ãƒ³ã¨ã—ã¦ä½¿ã‚ã‚Œã¦ã„ã‚Œã°ã€ã“ã‚Œã¯ãƒˆãƒ©ãƒ³ã‚¸ã‚·ãƒ§ãƒ³ã®æŒç¶šæ™‚é–“ã§ã™ã€‚"})
     endif
  "}}}
-  else
- "{{{ statement
-    if l:line =~ '^\s*$\|^\h'
+	elseif s:checkScreen()
+  "{{{ screen
+		"{{{ screen statement (^\s #)
+    if l:line =~ '^ *\w*$'
+			call add(l:list , {'word': 'add'         , 'menu': ''})
+			call add(l:list , {'word': 'bar'         , 'menu': ''})
+			call add(l:list , {'word': 'button'      , 'menu': ''})
+			call add(l:list , {'word': 'fixed'       , 'menu': ''})
+			call add(l:list , {'word': 'frame'       , 'menu': ''})
+			call add(l:list , {'word': 'grid'        , 'menu': ''})
+			call add(l:list , {'word': 'hbox'        , 'menu': ''})
+			call add(l:list , {'word': 'imagebutton' , 'menu': ''})
+			call add(l:list , {'word': 'input'       , 'menu': ''})
+			call add(l:list , {'word': 'key'         , 'menu': ''})
+			call add(l:list , {'word': 'label'       , 'menu': ''})
+			call add(l:list , {'word': 'null'        , 'menu': ''})
+			call add(l:list , {'word': 'mousearea'   , 'menu': ''})
+			call add(l:list , {'word': 'side'        , 'menu': ''})
+			call add(l:list , {'word': 'text'        , 'menu': ''})
+			call add(l:list , {'word': 'textbutton'  , 'menu': ''})
+			call add(l:list , {'word': 'timer'       , 'menu': ''})
+			call add(l:list , {'word': 'transform'   , 'menu': ''})
+			call add(l:list , {'word': 'vbar'        , 'menu': ''})
+			call add(l:list , {'word': 'vbox'        , 'menu': ''})
+			call add(l:list , {'word': 'viewport'    , 'menu': ''})
+			call add(l:list , {'word': 'window'      , 'menu': ''})
+			call add(l:list , {'word': 'imagemap'    , 'menu': ''})
+			call add(l:list , {'word': 'hotspot'     , 'menu': ''})
+			call add(l:list , {'word': 'hotbar'      , 'menu': ''})
+			call add(l:list , {'word': 'has'         , 'menu': ''})
+			call add(l:list , {'word': 'drag'        , 'menu': ''})
+			call add(l:list , {'word': 'draggroup'   , 'menu': ''})
+			call add(l:list , {'word': 'default'     , 'menu': ''})
+			call add(l:list , {'word': 'for'         , 'menu': ''})
+			call add(l:list , {'word': 'if'          , 'menu': ''})
+			call add(l:list , {'word': 'on'          , 'menu': ''})
+			call add(l:list , {'word': 'use'         , 'menu': ''})
+			call add(l:list , {'word': 'python'      , 'menu': ''})
+			call add(l:list , {'word': 'show screen' , 'menu': ''})
+			call add(l:list , {'word': 'hide screen' , 'menu': ''})
+			call add(l:list , {'word': 'call screen' , 'menu': ''})
+		" }}}
+		"{{{ Action
+		else
+			call add(l:list , {'word': 'Hide('                 , 'menu': '(screen, transition=None)'})
+			call add(l:list , {'word': 'Jump('                 , 'menu': '(label)'})
+			call add(l:list , {'word': 'Return('               , 'menu': '(value=None)'})
+			call add(l:list , {'word': 'Show('                 , 'menu': '(screen, transition=None, *args, **kwargs)'})
+			call add(l:list , {'word': 'ShowTransient('        , 'menu': '(screen, *args, **kwargs)'})
+			call add(l:list , {'word': 'SetDict('              , 'menu': '(dict, key, value)'})
+			call add(l:list , {'word': 'SetField('             , 'menu': '(objectfield, value')})
+			call add(l:list , {'word': 'SetScreenVariable('    , 'menu': '(name, value)'})
+			call add(l:list , {'word': 'SetVariable('          , 'menu': '(variable, value)'})
+			call add(l:list , {'word': 'ToggleDict('           , 'menu': '(dict, key, true_value=None, false_value=None)'})
+			call add(l:list , {'word': 'ToggleField('          , 'menu': '(object, field, true_value=None, false_value=None)'})
+			call add(l:list , {'word': 'ToggleScreenVariable(' , 'menu': '(name, true_value=None, false_value=None)'})
+			call add(l:list , {'word': 'ToggleVariable('       , 'menu': '(variable, true_value=None, false_value=None)'})
+			call add(l:list , {'word': 'MainMenu('             , 'menu': '(confirm=True)'})
+			call add(l:list , {'word': 'Quit('                 , 'menu': '(confirm=True)'})
+			call add(l:list , {'word': 'ShowMenu('             , 'menu': '(screen=None)'})
+			call add(l:list , {'word': 'Start('                , 'menu': '(label='start')'})
+			call add(l:list , {'word': 'FileAction('           , 'menu': '(name, page=None)'})
+			call add(l:list , {'word': 'FileDelete('           , 'menu': '(name, confirm=True, page=None)'})
+			call add(l:list , {'word': 'FileLoad('             , 'menu': '(name, confirm=True, page=None, newest=True)'})
+			call add(l:list , {'word': 'FilePage('             , 'menu': '(page)'})
+			call add(l:list , {'word': 'FilePageNext('         , 'menu': '(max=None)'})
+			call add(l:list , {'word': 'FilePagePrevious('     , 'menu': '(self)'})
+			call add(l:list , {'word': 'FileSave('             , 'menu': '(name, confirm=True, newest=True, page=None, cycle=False)'})
+			call add(l:list , {'word': 'FileTakeScreenshot('   , 'menu': '()'})
+			call add(l:list , {'word': 'QuickLoad('            , 'menu': '()'})
+			call add(l:list , {'word': 'QuickSave('            , 'menu': '(message=''Quick save complete.'', newest=False)'})
+			call add(l:list , {'word': 'Play('                 , 'menu': '(channel, file, **kwargs)'})
+			call add(l:list , {'word': 'Queue('                , 'menu': '(channel, file, **kwargs)'})
+			call add(l:list , {'word': 'SetMixer('             , 'menu': '(mixer, volume)'})
+		" }}}
+		endif
+	" }}}
+	else
+ "{{{ statement (^\s*#)
       let g:test=1
-      call add(l:list , {'word': 'python'    , 'menu': ''})
-      call add(l:list , {'word': 'init'      , 'menu': ''})
-      call add(l:list , {'word': 'label '     , 'menu': ''})
-      call add(l:list , {'word': 'menu'      , 'menu': ''})
-      call add(l:list , {'word': 'say'       , 'menu': ''})
-      call add(l:list , {'word': 'play'      , 'menu': ''})
-      call add(l:list , {'word': 'queue'      , 'menu': ''})
-      call add(l:list , {'word': 'stop'      , 'menu': ''})
-      call add(l:list , {'word': 'with'      , 'menu': ''})
-      call add(l:list , {'word': 'show'      , 'menu': ''})
-      call add(l:list , {'word': 'hide'      , 'menu': ''})
-      call add(l:list , {'word': 'scene'     , 'menu': ''})
-      call add(l:list , {'word': 'screen'    , 'menu': ''})
-      call add(l:list , {'word': 'image'     , 'menu': ''})
-      call add(l:list , {'word': 'define'    , 'menu': ''})
-      call add(l:list , {'word': 'return'    , 'menu': ''})
-      call add(l:list , {'word': 'transform ' , 'menu': ''})
-      call add(l:list , {'word': 'window'    , 'menu': ''})
-      call add(l:list , {'word': 'jump'      , 'menu': ''})
-      call add(l:list , {'word': 'call'      , 'menu': ''})
-      call add(l:list , {'word': 'while'      , 'menu': ''})
-      call add(l:list , {'word': 'if'      , 'menu': ''})
-      call add(l:list , {'word': 'else:'      , 'menu': ''})
-      call add(l:list , {'word': 'nvl'      , 'menu': ''})
-      call add(l:list , {'word': 'extend'      , 'menu': ''})
-      call add(l:list , {'word': 'center'      , 'menu': ''})
-      call add(l:list , {'word': 'pause'      , 'menu': ''})
+    if l:line =~ '^\s*\w*$'
+      let g:state=1
+      call add(l:list , {'word': 'python'       , 'menu': ''})
+      call add(l:list , {'word': 'init'         , 'menu': ''})
+      call add(l:list , {'word': 'label'        , 'menu': ''})
+      call add(l:list , {'word': 'menu'         , 'menu': ''})
+      call add(l:list , {'word': 'say'          , 'menu': ''})
+      call add(l:list , {'word': 'voice'        , 'menu': ''})
+      call add(l:list , {'word': 'play'         , 'menu': ''})
+      call add(l:list , {'word': 'play music '  , 'menu': ''})
+      call add(l:list , {'word': 'play sound '  , 'menu': ''})
+      call add(l:list , {'word': 'queue'        , 'menu': ''})
+      call add(l:list , {'word': 'queue music ' , 'menu': ''})
+      call add(l:list , {'word': 'queue sound ' , 'menu': ''})
+      call add(l:list , {'word': 'stop'         , 'menu': ''})
+      call add(l:list , {'word': 'stop music '  , 'menu': ''})
+      call add(l:list , {'word': 'stop sound '  , 'menu': ''})
+      call add(l:list , {'word': 'with'         , 'menu': ''})
+      call add(l:list , {'word': 'show'         , 'menu': ''})
+      call add(l:list , {'word': 'hide'         , 'menu': ''})
+      call add(l:list , {'word': 'scene'        , 'menu': ''})
+      call add(l:list , {'word': 'screen'       , 'menu': ''})
+      call add(l:list , {'word': 'image'        , 'menu': ''})
+      call add(l:list , {'word': 'define'       , 'menu': ''})
+      call add(l:list , {'word': 'return'       , 'menu': ''})
+      call add(l:list , {'word': 'transform'    , 'menu': ''})
+      call add(l:list , {'word': 'window'       , 'menu': ''})
+      call add(l:list , {'word': 'window show'  , 'menu': ''})
+      call add(l:list , {'word': 'window hide'  , 'menu': ''})
+      call add(l:list , {'word': 'jump'         , 'menu': ''})
+      call add(l:list , {'word': 'call'         , 'menu': ''})
+      call add(l:list , {'word': 'while'        , 'menu': ''})
+      call add(l:list , {'word': 'if'           , 'menu': ''})
+      call add(l:list , {'word': 'else:'        , 'menu': ''})
+      call add(l:list , {'word': 'nvl'          , 'menu': ''})
+      call add(l:list , {'word': 'nvl clear'    , 'menu': ''})
+      call add(l:list , {'word': 'extend'       , 'menu': ''})
+      call add(l:list , {'word': 'center'       , 'menu': ''})
+      call add(l:list , {'word': 'pause'        , 'menu': ''})
    "}}}
-   "{{{ with transition
-    elseif search('with\s\%#', 'bcn', l:line)
+   "{{{ with transition (with #)
+    elseif l:line =~ 'with\s\+\w*$'
       call add(l:list , {'word': 'dissolve'           , 'menu': ''})
       call add(l:list , {'word': 'fade'               , 'menu': ''})
       call add(l:list , {'word': 'move'               , 'menu': ''})
@@ -264,26 +355,34 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
       call add(l:list , {'word': 'Pixellate'          , 'menu': 'Pixellate(time, steps)'})
       call extend(l:list, g:renpy_transition)
    "}}}
-   "{{{ play
-    elseif search('play\s\%#', 'bcn', l:line)
-      call add(l:list , {'word': 'soudn' , 'menu': ''})
-      call add(l:list , {'word': 'music'  , 'menu': ''})
-      call add(l:list , {'word': 'voice'  , 'menu': ''})
+   "{{{ play (play #)
+    elseif l:line =~ 'play.*\s\+\w*$'
+      call add(l:list , {'word': 'sound'    , 'menu': ''})
+      call add(l:list , {'word': 'music'    , 'menu': ''})
+      call add(l:list , {'word': 'fadeout ' , 'menu': ''})
+      call add(l:list , {'word': 'fadein '  , 'menu': ''})
+      call add(l:list , {'word': 'loop'     , 'menu': ''})
+      call add(l:list , {'word': 'noloop'   , 'menu': ''})
+      call extend(l:list, g:renpy_music)
    "}}}
-   "{{{ queue
-    elseif search('queue\s\%#', 'bcn', l:line)
-      call add(l:list , {'word': 'soudn' , 'menu': ''})
+   "{{{ queue (queue #)
+    elseif l:line =~ 'queue.*\s\+\w*$'
+      call add(l:list , {'word': 'sound'  , 'menu': ''})
       call add(l:list , {'word': 'music'  , 'menu': ''})
-      call add(l:list , {'word': 'voice'  , 'menu': ''})
+      call add(l:list , {'word': 'loop'     , 'menu': ''})
+      call add(l:list , {'word': 'noloop'   , 'menu': ''})
+      call extend(l:list, g:renpy_music)
    "}}}
-   "{{{ stop
-    elseif search('stop\s\%#', 'bcn', l:line)
-      call add(l:list , {'word': 'soudn' , 'menu': ''})
+   "{{{ stop (stop #)
+    elseif l:line =~ 'stop.*\s\+\w*$'
+      call add(l:list , {'word': 'sound'  , 'menu': ''})
       call add(l:list , {'word': 'music'  , 'menu': ''})
-      call add(l:list , {'word': 'voice'  , 'menu': ''})
+      call add(l:list , {'word': 'fadeout ' , 'menu': ''})
+      call add(l:list , {'word': 'fadein '  , 'menu': ''})
+      call extend(l:list, g:renpy_music)
    "}}}
-   "{{{ at transform
-    elseif search('at\s\%#', 'bcn', l:line)
+   "{{{ at transform (at #)
+    elseif l:line =~ 'at\s\+\w*$'
       call add(l:list , {'word': 'center'         , 'menu': ''})
       call add(l:list , {'word': 'default'        , 'menu': ''})
       call add(l:list , {'word': 'left'           , 'menu': ''})
@@ -297,44 +396,74 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
       call add(l:list , {'word': 'truecenter'     , 'menu': ''})
       call extend(l:list, g:renpy_transform)
    "}}}
-   "{{{ scene
-    elseif search('scene\s\%#', 'bcn', l:line)
+   "{{{ window and nvl ... + transition (window/nvl word #)
+    elseif l:line =~ '\(window\|nvl\) \w*\s\+\w*$'
+      call add(l:list , {'word': 'dissolve' , 'menu': ''})
+    " }}}
+   "{{{ scene (scene/show/hide #)
+    elseif l:line =~ '\(show\|hide\|scene\)\s\+\w*$'
       call add(l:list , {'word': 'expression' , 'menu': ''})
       call add(l:list , {'word': 'black' , 'menu': ''})
       call extend(l:list, s:imagetag_list )
    "}}}
-   "{{{ show
-    elseif search('show\s\%#', 'bcn', l:line)
-      call add(l:list , {'word': 'expression' , 'menu': ''})
-      call extend(l:list, s:imagetag_list )
-   "}}}
-   "{{{ hide
-    elseif search('hide\s\%#', 'bcn', l:line)
-      call extend(l:list, s:imagetag_list )
-    " }}}
-   "{{{ window
-    elseif search('window\s\%#', 'bcn', l:line)
+   "{{{ window (window #)
+    elseif l:line =~ 'window\s\+\w*$'
       call add(l:list , {'word': 'show' , 'menu': ''})
       call add(l:list , {'word': 'hide' , 'menu': ''})
     " }}}
-   "{{{ nvl
-    elseif search('nvl\s\%#', 'bcn', l:line)
+   "{{{ nvl (nvl #)
+    elseif l:line =~ 'nvl\s\+\w*$'
       call add(l:list , {'word': 'show' , 'menu': ''})
       call add(l:list , {'word': 'hide' , 'menu': ''})
       call add(l:list , {'word': 'clear' , 'menu': ''})
     " }}}
-   "{{{ window and nvl ... + transition
-    elseif search('\(window\|nvl\)\s\w*\s\%#', 'bcn', l:line)
-      call add(l:list , {'word': 'dissolve' , 'menu': ''})
+   "{{{ im.func (im.#)
+    elseif l:line =~ 'im\.\w*$'
+			call add(l:list , {'word': 'im.AlphaMask('   , 'menu': '(base, mask, **properties)'})
+			call add(l:list , {'word': 'im.Composite('   , 'menu': '(size, *args, **properties)'})
+			call add(l:list , {'word': 'im.Crop('        , 'menu': '(im, rect)'})
+			call add(l:list , {'word': 'im.FactorScale(' , 'menu': '(im, width, height=None, bilinear=True, **properties)'})
+			call add(l:list , {'word': 'im.Flip('        , 'menu': '(im, horizontal=False, vertical=False, **properties)'})
+			call add(l:list , {'word': 'im.Grayscale('   , 'menu': '(im, **properties)'})
+			call add(l:list , {'word': 'im.Scale('       , 'menu': '(im, width, height, bilinear=True, **properties)'})
+			call add(l:list , {'word': 'im.Sepia('       , 'menu': '(im, **properties)'})
+			call add(l:list , {'word': 'im.Tile('        , 'menu': '(im, size=None, **properties)'})
     " }}}
-   "{{{  imagename
+   "{{{ config (config.#)
+    elseif l:line =~ 'config\.\w*$'
+      call add(l:list , {'word': 'config.developer'               , 'menu': ''})
+      call add(l:list , {'word': 'config.help'                    , 'menu': ''})
+      call add(l:list , {'word': 'config.name'                    , 'menu': ''})
+      call add(l:list , {'word': 'config.save_directory'          , 'menu': ''})
+      call add(l:list , {'word': 'config.screen_height'           , 'menu': ''})
+      call add(l:list , {'word': 'config.screen_width'            , 'menu': ''})
+      call add(l:list , {'word': 'config.translations'            , 'menu': ''})
+      call add(l:list , {'word': 'config.window_icon'             , 'menu': ''})
+      call add(l:list , {'word': 'config.windows_icon'            , 'menu': ''})
+      call add(l:list , {'word': 'config.window_title'            , 'menu': ''})
+      call add(l:list , {'word': 'config.version'                 , 'menu': ''})
+      call add(l:list , {'word': 'config.adv_nvl_transition'      , 'menu': ''})
+      call add(l:list , {'word': 'config.after_load_transition'   , 'menu': ''})
+      call add(l:list , {'word': 'config.end_game_transition'     , 'menu': ''})
+      call add(l:list , {'word': 'config.end_splash_transition'   , 'menu': ''})
+      call add(l:list , {'word': 'config.enter_replay_transition' , 'menu': ''})
+      call add(l:list , {'word': 'config.enter_transition'        , 'menu': ''})
+      call add(l:list , {'word': 'config.enter_yesno_transition'  , 'menu': ''})
+      call add(l:list , {'word': 'config.exit_replay_transition'  , 'menu': ''})
+      call add(l:list , {'word': 'config.exit_transition'         , 'menu': ''})
+    " }}}
+    " {{{ define (define #)
+    elseif l:line =~ 'define'
+      call add(l:list , {'word': 'Character(' , 'menu': ''})
+    " }}}
+   "{{{  imagename (imagetag #)
    else
     for l:imagetag in keys(g:renpy_image)
-      if search(l:imagetag.'.*\s\%#', 'bcn', l:line)
+      if l:line =~ l:imagetag.'.*\s\+\w*$'
         for l:imageattribute in g:renpy_image[l:imagetag]
           call add(l:list , {'word': l:imageattribute})
         endfor
-        call add(l:list , {'word': 'at' , 'menu': ''})
+        call add(l:list , {'word': 'at'   , 'menu': ''})
         call add(l:list , {'word': 'with' , 'menu': ''})
       endif
     endfor
@@ -348,10 +477,25 @@ function! neocomplcache#sources#renpy_complete#define()
   return s:source
 endfunction
 
-
-command! ATL call s:checkATL()
+" for debug
+" command! ATL echo s:checkATL()
+" command! Screen echo s:checkScreen()
 function! s:checkATL() " check in ATL {{{
   let l:match = search('\%(show\|scene\|image\|transform\).*:', 'bcnW')
+  if l:match != 0
+      let l:blocknest = match(getline(l:match), '\h')
+      for l:line in range(l:match + 1, line('.'))
+          if match(getline(l:line), '^$\|^\s*$\|^\( \)\{'.(l:blocknest + 4).'}') < 0
+              return 0
+          endif
+      endfor
+      return 1
+  else
+      return 0
+  endif
+endfunction " }}}
+function! s:checkScreen() " check in Screen {{{
+  let l:match = search('\%(screen\).*:', 'bcnW')
   if l:match != 0
       let l:blocknest = match(getline(l:match), '\h')
       for l:line in range(l:match + 1, line('.'))
