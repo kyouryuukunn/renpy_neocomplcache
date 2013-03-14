@@ -52,7 +52,7 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
   let l:line = strpart(getline('.'), 0, getpos('.')[2]-1)
 
 	if l:line =~ '"'
-		return -1
+    return []
 	elseif s:checkATL()
  "{{{ ATL
    "{{{ with transition (with #)
