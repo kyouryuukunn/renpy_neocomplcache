@@ -50,7 +50,10 @@ endfunction "}}}
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
   let l:list = []
   let l:line = strpart(getline('.'), 0, getpos('.')[2]-1)
-  if s:checkATL()
+
+	if l:line =~ '"'
+		return -1
+	elseif s:checkATL()
  "{{{ ATL
    "{{{ with transition (with #)
     if l:line =~ 'with\s\+\w*$'
@@ -428,6 +431,18 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str) "{{{
 			call add(l:list , {'word': 'im.Scale('       , 'menu': '(im, width, height, bilinear=True, **properties)'})
 			call add(l:list , {'word': 'im.Sepia('       , 'menu': '(im, **properties)'})
 			call add(l:list , {'word': 'im.Tile('        , 'menu': '(im, size=None, **properties)'})
+			call add(l:list , {'word': 'im.MatrixColor('       , 'menu': '(im, matrix, **properties)'})
+			call add(l:list , {'word': 'im.matrix('            , 'menu': '()'})
+			call add(l:list , {'word': 'im.matrix.brightness(' , 'menu': '(b)'})
+			call add(l:list , {'word': 'im.matrix.colorize('   , 'menu': '(black_color, white_color)'})
+			call add(l:list , {'word': 'im.matrix.contrast('   , 'menu': '(c)'})
+			call add(l:list , {'word': 'im.matrix.desaturate(' , 'menu': '()'})
+			call add(l:list , {'word': 'im.matrix.hue('        , 'menu': '(h)'})
+			call add(l:list , {'word': 'im.matrix.identity('   , 'menu': '()'})
+			call add(l:list , {'word': 'im.matrix.invert('     , 'menu': '()'})
+			call add(l:list , {'word': 'im.matrix.opacity('    , 'menu': '(o)'})
+			call add(l:list , {'word': 'im.matrix.saturation(' , 'menu': '(level, desat=(0.2126, 0.7152, 0.0722))'})
+			call add(l:list , {'word': 'im.matrix.tint('       , 'menu': '(r, g, b)'})
     " }}}
    "{{{ config (config.#)
     elseif l:line =~ 'config\.\w*$'
